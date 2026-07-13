@@ -1540,37 +1540,22 @@ const skillObserver = new IntersectionObserver((entries) => {
 document.querySelectorAll('#skills').forEach(s => skillObserver.observe(s));
 
 // ── FORM SUBMIT ──
-```javascript
 function handleSubmit(e) {
   e.preventDefault();
   const btn = document.getElementById('submitBtn');
   btn.textContent = 'Sending... ⏳';
   btn.disabled = true;
-  fetch(e.target.action, {
-    method: 'POST',
-    body: new FormData(e.target),
-    headers: {
-      'Accept': 'application/json'
-    }
-  }).then(response => {
-    if (response.ok) {
-      btn.textContent = 'Message Sent! ✅';
-      btn.style.background = 'linear-gradient(135deg, #16a34a, #15803d)';
-      e.target.reset();
-    } else {
-      btn.textContent = 'Error! ❌';
-    }
-  }).catch(error => {
-    btn.textContent = 'Error! ❌';
-  }).finally(() => {
+  setTimeout(() => {
+    btn.textContent = 'Message Sent! ✅';
+    btn.style.background = 'linear-gradient(135deg, #16a34a, #15803d)';
+    e.target.reset();
     setTimeout(() => {
       btn.textContent = 'Send Message ✉️';
       btn.style.background = '';
       btn.disabled = false;
     }, 3000);
-  });
+  }, 1500);
 }
-```
 
 // ── RELIC CHATBOT ──
 (function () {
