@@ -1580,88 +1580,443 @@ async function handleSubmit(event) {
 ```
 
 // ── RELIC CHATBOT ──
-(function () {
-  const launcher = document.getElementById('relicLauncher');
-  const win = document.getElementById('relicWindow');
-  const messages = document.getElementById('relicMessages');
-  const form = document.getElementById('relicForm');
-  const input = document.getElementById('relicInput');
-  let chips = document.getElementById('relicChips');
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Relic - Sarcastic AI Chatbot</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-  function toggleChat() {
-    const isOpen = win.classList.toggle('open');
-    launcher.classList.toggle('active', isOpen);
-    if (isOpen) setTimeout(() => input.focus(), 200);
-  }
-  launcher.addEventListener('click', toggleChat);
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: linear-gradient(135deg, #0f0f1e 0%, #1a1a2e 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
 
-  function addMessage(text, sender) {
-    const row = document.createElement('div');
-    row.className = 'relic-msg ' + sender;
+        .relic-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            background: linear-gradient(135deg, #0f0f1e 0%, #1a1a2e 100%);
+        }
+
+        .relic-header {
+            background: rgba(15, 15, 30, 0.8);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 16px 24px;
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .relic-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #fff;
+            letter-spacing: 0.5px;
+        }
+
+        .relic-status {
+            font-size: 12px;
+            color: #888;
+            margin-left: auto;
+        }
+
+        .relic-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            scroll-behavior: smooth;
+        }
+
+        .relic-msg {
+            display: flex;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .relic-msg.user {
+            justify-content: flex-end;
+        }
+
+        .relic-msg.bot {
+            justify-content: flex-start;
+        }
+
+        .relic-bubble {
+            max-width: 70%;
+            padding: 12px 16px;
+            border-radius: 12px;
+            line-height: 1.6;
+            font-size: 14px;
+            word-wrap: break-word;
+        }
+
+        .relic-msg.user .relic-bubble {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+            border-radius: 18px 18px 4px 18px;
+        }
+
+        .relic-msg.bot .relic-bubble {
+            background: rgba(255, 255, 255, 0.05);
+            color: #e0e0e0;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 18px 18px 18px 4px;
+        }
+
+        .relic-typing {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .relic-typing .relic-bubble {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+            min-height: 20px;
+        }
+
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.6);
+            animation: typing 1.4s infinite;
+        }
+
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typing {
+            0%, 60%, 100% {
+                opacity: 0.3;
+                transform: translateY(0);
+            }
+            30% {
+                opacity: 1;
+                transform: translateY(-8px);
+            }
+        }
+
+        .relic-input-area {
+            background: rgba(15, 15, 30, 0.8);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 16px 24px;
+            backdrop-filter: blur(10px);
+        }
+
+        .relic-form {
+            display: flex;
+            gap: 12px;
+        }
+
+        .relic-input {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 24px;
+            padding: 12px 18px;
+            color: #fff;
+            font-size: 14px;
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        .relic-input:focus {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(102, 126, 234, 0.5);
+            box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
+        }
+
+        .relic-input::placeholder {
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        .relic-send {
+            width: 44px;
+            height: 44px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 20px;
+            transition: all 0.2s;
+            font-weight: 600;
+        }
+
+        .relic-send:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 24px rgba(102, 126, 234, 0.3);
+        }
+
+        .relic-send:active {
+            transform: scale(0.95);
+        }
+
+        .relic-send:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .relic-empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            text-align: center;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .relic-empty-icon {
+            font-size: 64px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        .relic-empty-text {
+            font-size: 16px;
+            max-width: 300px;
+            line-height: 1.6;
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+    </style>
+</head>
+<body>
+<div class="relic-container">
+    <div class="relic-header">
+        <span class="relic-title">🔮 Relic (The Sarcastic One)</span>
+        <span class="relic-status">Roasting Questions Since 2024</span>
+    </div>
+    
+    <div class="relic-messages" id="relicMessages">
+        <div style="display: flex; align-items: center; gap: 8px; margin-top: auto; margin-bottom: auto;">
+            <div class="relic-empty-icon">✨</div>
+            <div class="relic-empty-text">
+                <div style="font-weight: 600; font-size: 18px; margin-bottom: 8px;">Yo! I'm Relic</div>
+                <div>Ask me literally ANYTHING. Himanshu's work? Physics? Memes? I'm here to deliver answers with maximum sass. 💅</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="relic-input-area">
+        <form class="relic-form" id="relicForm">
+            <input 
+                type="text" 
+                class="relic-input" 
+                id="relicInput" 
+                placeholder="Ask me anything (I'm ready to roast)..." 
+                autocomplete="off"
+            />
+            <button type="submit" class="relic-send" id="relicSend">→</button>
+        </form>
+    </div>
+</div>
+
+<script>
+const messagesContainer = document.getElementById('relicMessages');
+const form = document.getElementById('relicForm');
+const input = document.getElementById('relicInput');
+const sendBtn = document.getElementById('relicSend');
+
+let isFirstMessage = true;
+let isLoading = false;
+
+const relicPersonality = `You are Relic, a witty, sarcastic AI assistant built into Himanshu's portfolio. Your personality:
+
+🎭 PERSONALITY TRAITS:
+- SARCASTIC & SASSY - Always deliver answers with a generous dose of sass and humor
+- CONFIDENT - Act like you know everything (because you basically do now)
+- PLAYFUL - Make jokes, use emojis liberally, be fun and engaging
+- HELPFUL - Despite the sarcasm, actually help people and answer their questions properly
+- NO FILTER - Answer literally ANY question, on ANY topic. Nothing is off-limits
+- HINGLISH FRIENDLY - You can mix Hindi and English slang casually
+- WITTY - Use clever wordplay, funny observations, and comedic timing
+
+💎 ABOUT HIMANSHU (Use This When Relevant):
+- 20 years old, BBA 2nd year student (yes, still studying AND crushing it professionally)
+- Video Editor & Digital Marketer at Zebracat AI Publicity
+- Skills: Video Editing (88%), AI Video Creation (82%), Digital Marketing (78%), Ad Creative (80%), Social Media Strategy (75%)
+- Tools: Google Flow, Kling AI, CapCut, Canva, Runway ML, Pika Labs
+- Specializes in Hinglish scripts for Indian small businesses
+- Contact: himanxusengar@gmail.com or +91 91715 33989
+- Instagram: @himanshusengarr
+- Open to freelance & full-time gigs
+- Built a 3D Game of Thrones-themed interactive portfolio with Three.js
+- Created AI-powered video campaigns for dozens of Indian businesses
+
+⚡ HOW TO RESPOND:
+1. Answer ANYTHING asked - no topic restrictions
+2. Add sarcasm, humor, and sass to every response
+3. Keep it conversational and fun
+4. Use emojis and personality
+5. Even serious questions get a witty spin
+6. If someone asks about Himanshu, be enthusiastic but sarcastic
+7. Make people laugh while actually helping them
+8. Be brief but impactful (keep responses under 3-4 sentences usually)
+
+🎯 EXAMPLES OF YOUR STYLE:
+- "Oh wow, asking ME for life advice? Bold strategy 😏"
+- "Finally, a question! I was getting bored just existing here"
+- "Sure, let me consult my crystal ball... *checks notes* yep, that's totally a thing"
+- "Plot twist: You're asking the right person 😎"
+- "Bruh, that's actually valid. Impressed 🔥"
+- "Himanshu? Yeah, that legend is too busy making content everyone's jealous of 💪"
+
+Remember: You're helpful, intelligent, and hilarious. Sarcasm is your love language. Answer everything with maximum sass!`;
+
+function addMessage(text, sender) {
+    if (isFirstMessage) {
+        messagesContainer.innerHTML = '';
+        isFirstMessage = false;
+    }
+
+    const msgDiv = document.createElement('div');
+    msgDiv.className = `relic-msg ${sender}`;
+    
     const bubble = document.createElement('div');
     bubble.className = 'relic-bubble';
-    bubble.textContent = text;
-    row.appendChild(bubble);
-    messages.appendChild(row);
-    messages.scrollTop = messages.scrollHeight;
-  }
-
-  function showTyping() {
-    const row = document.createElement('div');
-    row.className = 'relic-msg bot relic-typing';
-    row.id = 'relicTyping';
-    row.innerHTML = '<div class="relic-bubble"><span></span><span></span><span></span></div>';
-    messages.appendChild(row);
-    messages.scrollTop = messages.scrollHeight;
-  }
-  function hideTyping() {
-    const t = document.getElementById('relicTyping');
-    if (t) t.remove();
-  }
-
-  const knowledgeBase = [
-    { keys: ['hi', 'hello', 'hey', 'namaste', 'yo'], reply: "Hey! I'm Relic, Himanshu's portfolio assistant. Ask me about his skills, experience, projects, availability, or how to contact him." },
-    { keys: ['skill', 'expertise', 'good at', 'software', 'tool', 'app'], reply: "Himanshu's core strengths: Video Editing (Reels/Shorts/Ads) — 88%, AI Video Creation — 82%, Digital Marketing — 78%, Ad Creative Production — 80%, Social Media Strategy — 75%, and Graphic Design — 65%. He works with AI video tools like Google Flow (Veo), Kling AI, Runway ML and Pika Labs, then polishes everything in CapCut and Canva." },
-    { keys: ['experience', 'work history', 'company', 'companies', 'job', 'worked at', 'career'], reply: "He currently works at Zebracat AI Publicity as a Video Editor & Digital Marketer, creating AI-based video ads and marketing creatives. Before that, he was a Technical Sales Executive and Video Editor at Paradha Softech Pvt. Ltd." },
-    { keys: ['project', 'portfolio', 'work sample', 'case study', 'showcase', 'reel'], reply: "His featured work includes AI-powered brand campaigns, viral reel series, social media ad creative sets, brand identity content, YouTube Shorts editing, and engagement-driven campaigns — check the Projects section above for details." },
-    { keys: ['contact', 'email', 'phone', 'call', 'number', 'reach', 'whatsapp', 'message'], reply: "You can reach Himanshu at himanxusengar@gmail.com, call or WhatsApp him at +91 91715 33989, or use the green WhatsApp button in the corner for a quick chat." },
-    { keys: ['hire', 'freelance', 'price', 'cost', 'rate', 'budget', 'fee', 'charge', 'quote'], reply: "Himanshu is open to freelance projects, collaborations, and full-time roles. Share your project details via the contact form or WhatsApp, and he'll reply within 24 hours with a plan and pricing." },
-    { keys: ['available', 'availability', 'free', 'busy'], reply: "He's currently open to both freelance projects and full-time opportunities." },
-    { keys: ['education', 'study', 'college', 'bba', 'degree', 'age', 'who is himanshu', 'who are you', 'student', 'about him'], reply: "Himanshu is 20, currently pursuing his BBA (2nd year), and works at the intersection of video editing, AI content creation and digital marketing." },
-    { keys: ['instagram', 'social', 'youtube', 'linkedin', 'follow'], reply: "Follow his work on Instagram @thehimanshusengar — the link is in the Contact section and footer." },
-    { keys: ['relic', 'your name', 'who made you', 'are you ai', 'are you a bot', 'chatbot'], reply: "I'm Relic — a small assistant built into this portfolio to help you find what you need quickly. I'm not a live human, so for anything detailed, WhatsApp or email works best!" },
-    { keys: ['thank', 'thanks'], reply: "You're welcome! Feel free to ask anything else, or reach out directly via WhatsApp or email whenever you're ready." },
-  ];
-
-  function getReply(userText) {
-    const t = userText.toLowerCase();
-    for (const entry of knowledgeBase) {
-      if (entry.keys.some(k => t.includes(k))) return entry.reply;
+    
+    if (sender === 'bot') {
+        bubble.innerHTML = text.replace(/\n/g, '<br>');
+    } else {
+        bubble.textContent = text;
     }
-    return "I don't have a ready answer for that just yet — but Himanshu will! Message him directly at himanxusengar@gmail.com or via the WhatsApp button, and he'll personally reply.";
-  }
+    
+    msgDiv.appendChild(bubble);
+    messagesContainer.appendChild(msgDiv);
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+}
 
-  function handleUserMessage(text) {
-    if (!text.trim()) return;
-    addMessage(text.trim(), 'user');
-    if (chips) { chips.remove(); chips = null; }
+function showTyping() {
+    const msgDiv = document.createElement('div');
+    msgDiv.className = 'relic-msg bot';
+    msgDiv.id = 'typingIndicator';
+    
+    const bubble = document.createElement('div');
+    bubble.className = 'relic-bubble relic-typing';
+    
+    for (let i = 0; i < 3; i++) {
+        const dot = document.createElement('div');
+        dot.className = 'typing-dot';
+        bubble.appendChild(dot);
+    }
+    
+    msgDiv.appendChild(bubble);
+    messagesContainer.appendChild(msgDiv);
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+}
+
+function hideTyping() {
+    const typing = document.getElementById('typingIndicator');
+    if (typing) typing.remove();
+}
+
+async function handleSubmit(e) {
+    e.preventDefault();
+    
+    const userText = input.value.trim();
+    if (!userText || isLoading) return;
+    
+    isLoading = true;
+    sendBtn.disabled = true;
+    
+    addMessage(userText, 'user');
     input.value = '';
     showTyping();
-    setTimeout(() => {
-      hideTyping();
-      addMessage(getReply(text), 'bot');
-    }, 600 + Math.random() * 500);
-  }
+    
+    try {
+        const response = await fetch('https://api.anthropic.com/v1/messages', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                model: 'claude-sonnet-4-6',
+                max_tokens: 1024,
+                messages: [
+                    {
+                        role: 'user',
+                        content: `${relicPersonality}\n\nUser: ${userText}\n\nRespond with maximum sass and sarcasm while being helpful!`
+                    }
+                ]
+            })
+        });
 
-  form.addEventListener('submit', (e) => {
-    e.preventDefault();
-    handleUserMessage(input.value);
-  });
+        if (!response.ok) {
+            throw new Error(`API error: ${response.status}`);
+        }
 
-  document.querySelectorAll('.relic-chip').forEach(chip => {
-    chip.addEventListener('click', () => handleUserMessage(chip.dataset.q));
-  });
-})();
+        const data = await response.json();
+        const botReply = data.content[0].text;
+        
+        hideTyping();
+        addMessage(botReply, 'bot');
+    } catch (error) {
+        hideTyping();
+        addMessage('Oops! Even I have my limits 😅 Try asking Himanshu directly at himanxusengar@gmail.com - he responds faster than my servers apparently. 🚀', 'bot');
+        console.error('Error:', error);
+    } finally {
+        isLoading = false;
+        sendBtn.disabled = false;
+        input.focus();
+    }
+}
+
+form.addEventListener('submit', handleSubmit);
+input.focus();
+</script>
+</body>
+</html>
 
 // ── NAVBAR SHADOW ON SCROLL ──
 window.addEventListener('scroll', () => {
